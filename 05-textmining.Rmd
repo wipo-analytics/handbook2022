@@ -1,9 +1,8 @@
 # Text Mining {#textmining}
 \index{text}
 <!--- last spell checked 2022-08-18--->
-### Introduction
 
-Text mining involves the extraction of information from text sources. In the case of the scientific literature and patent data, text mining is closely associated with the concept of technology or tech mining as popularised by Alan Porter and Scott Cunningham [@lens.org/023-481-161-675-434]. However, the rise and rise of social media has expanded text mining into the pursuit of insights from platforms Twitter and other social media platforms involving topic modelling and sentiment analysis to inform decision making on public perceptions of technology and responses to products. 
+Text mining involves the extraction of information from text sources. In the case of the scientific literature and patent data, text mining is closely associated with the concept of technology or tech mining as popularised by Alan Porter and Scott Cunningham [@lens.org/023-481-161-675-434]. However, the rise and rise of social media has expanded text mining into the pursuit of insights from platforms Twitter and other social media platforms involving topic modelling and sentiment analysis to inform decision making on public perceptions of technology and responses to products. A [dynamic Lens collection](https://www.lens.org/lens/search/scholar/list?collectionId=203440) on text mining has been created to complement this chapter and will allow you to explore the diverse uses of text mining.
 
 What we might call classic approaches to text mining are rapidly being blended with or replaced by machine learning approaches to Natural Language Processing. We consider machine learning based approaches in the next chapter. In this chapter we focus on some of the basics of text mining and argue that rather than jumping into machine learning based approaches a great deal can be achieved using standard text mining approaches. Standard approaches to text mining have the advantage that they are relatively straightforward to implement and are transparent to the analyst. This is not always true for machine learning based approaches. Perhaps more importantly, an understanding of standard text mining techniques provides a platform for engaging with machine learning based approaches considered in the next chapter. 
 
@@ -17,19 +16,19 @@ The examples in this chapter are designed to illustrate tidy text mining at the 
 
 In the last chapter on patent classification we used the ipcr table from the US PatentsView Service to explore uses of the International Patent Classification. In this chapter we will use the patents table for patents granted in the United States. At the time of writing that table consists of 7.8 million documents with the patents table containing identifier information, the titles and the abstracts. You can download the latest version of this table to your machine from the following address.
 
-```{r}
+```{r echo=TRUE, eval=FALSE}
 "https://s3.amazonaws.com/data.patentsview.org/download/patent.tsv.zip"   
 ```
 
 Building on the discussion in the last chapter on patent classification we will also download the latest version of the ipcr table that is available from here.
 
-```{r}
+```{r echo=TRUE, eval=FALSE}
 "https://s3.amazonaws.com/data.patentsview.org/download/ipcr.tsv.zip"    
 ```
 
 One issue with .zip files is that they may not always read in correctly without being unzipped first. Unzip the files on your machine either using a built in application or programatically. We then read in the file. We will be using R and the tidytext package but it is straightforward to read in this data in Python with Pandas. 
 
-We will read in a selection of the columns that we will use. To assist with joining our tables we will rename the id column in the grants table as this is called patent_id in the ipc table. We will also create a publication number by joining up the country, number and kind columns. That can assist us with looking up documents online or preparing data for joining to other databases (such as PATSTAT). We can also vary the separator e.g. use "_" depending on the format used by the external database.
+We will read in a selection of the columns that we will use. To assist with joining our tables we will rename the id column in the grants table as this is called patent_id in the ipc table. We will also create a publication number by joining up the country, number and kind columns. That can assist us with looking up documents online or preparing data for joining to other databases (such as PATSTAT). We can also vary the separator e.g. use "_" depending on the format used by the external database. Figure \@ref(tab:rawgrants) displays a selection of the data. 
 
 ```{r, eval=FALSE, message=FALSE, warning=FALSE}
 library(tidyverse)
@@ -49,25 +48,22 @@ save(grants, file = "data/text_mining/grants.rda")
 ```{r eval=FALSE, echo=FALSE}
 # DONT RUN
 head_grants <- grants %>% 
-  head(20)
+  select(patent_id, publication_number, title) %>% 
+  head(5)
 
 save(head_grants, file = "data/text_mining/head_grants.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE}
+```{r rawgrants, eval=TRUE, echo=FALSE, fig.align='center', fig.cap="A Sample of Fields in the Edited Grants Table"}
 load("data/text_mining/head_grants.rda")
 
 head_grants %>% 
-  knitr::kable()
+  knitr::kable(caption = "A Sample of Fields in the Edited Grants Table")
 ```
 
-In the previous chapter we worked with the PatentsView IPC table. The raw table contains a 'patent_id' field that we can link with other tables and a set of columns with different ipc levels that we can use to construct the four character subclass (e.g. C12N) with. We will use this table below with the patent_id field as the basis for joining with the titles and abstracts.
+In the previous chapter we worked with the PatentsView IPC table. The raw table contains a 'patent_id' field that we can link with other tables and a set of columns with different ipc levels that we can use to construct the four character subclass (e.g. C12N) with. We will use this table below with the patent_id field as the basis for joining with the titles and abstracts. Figure \@ref(tab:cleanipcsubclass) shows a sample of patent ids and IPC subclass from the cleaned ipcr field. This code also illustrates the use of the `dplyr::case_when()` function to correct missing zeros in IPC classes in the raw ipcr table as an alternative to the use of if statements. 
 
 ```{r eval=FALSE}
-# read across from the connection
-# fix errors on some documents where the ipc_class 
-# does not contain a leading zero
-
 ipcr <- vroom::vroom("data/text_mining/ipcr.csv.gz", show_col_types = FALSE) %>%
   mutate(ipc_class =
            case_when(
@@ -85,22 +81,26 @@ ipcr <- vroom::vroom("data/text_mining/ipcr.csv.gz", show_col_types = FALSE) %>%
 ```{r echo=FALSE, eval=FALSE}
 # DONT RUN
 save(ipcr, file = "data/text_mining/ipcr.rda")
+
 ```
 
 ```{r eval=FALSE, echo=FALSE}
 # DONT RUN
 head_ipcr <- ipcr %>% 
-  head(20)
+  head(10)
+
+head_ipcr <- head_ipcr %>% 
+  head(10)
 
 save(head_ipcr, file = "data/text_mining/head_ipcr.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE}
+```{r cleanipcsubclass, eval=TRUE, echo=FALSE}
 # load data
 load("data/text_mining/head_ipcr.rda")
 
 head_ipcr %>% 
-  knitr::kable()
+  knitr::kable(caption = "Patent Ids and IPC Subclasses in the Cleaned IPCR Table")
 ```
 
 <!--- load file to data store, cache head--->
@@ -136,14 +136,14 @@ head_grant_words <- grant_words %>%
 save(head_grant_words, file = "data/text_mining/head_grant_words.rda")
 ```
 
-When we have processed the text we will see that out 7.9 million individual document titles have expanded to 60,839,863 rows containing words in documents as we see in Figure \@ref(fig:titles)  which shows two titles. The important point here is that we know exactly what words appear in each patent document which is a very powerful tool. 
+When we have processed the text we will see that out 7.9 million individual document titles have expanded to 60,839,863 rows containing words in documents as we see in Figure \@ref(tab:titles)  which shows words appearing in the titles per document. The important point here is that we know exactly what words appear in each patent document which is a very powerful tool. 
 
 ```{r titles, eval=TRUE, echo=FALSE, fig.align='center', fig.cap="Words Appearing in the Titles of Two Patent Documents"}
 # load data
 load("data/text_mining/head_grant_words.rda")
 
 head_grant_words %>% 
-  knitr::kable()
+  knitr::kable(caption = "Words Appearing in the Titles of Two Patent Documents")
 ```
 
 
@@ -151,7 +151,7 @@ As this makes clear, it is very easy to break a document down into its constitue
 
 ## Removing Stop Words
 
-As we can see in Figure \@ref(fig:titles) there are many common words such as "and" that do not contain useful information. We can see the impact of these terms if we count up the words as we see in Figure \@ref(fig:commonwords).  
+As we can see in Figure \@ref(tab:titles) there are many common words such as "and" that do not contain useful information. We can see the impact of these terms if we count up the words as we see in Figure \@ref(tab:commonwords).  
 
 ```{r echo=FALSE, eval=FALSE}
 # DONT RUN
@@ -185,13 +185,13 @@ save(count_grant_words, file = "data/text_mining/count_grant_words.rda")
 load("data/text_mining/count_grant_words.rda")
 
 count_grant_words %>% 
-  knitr::kable()
+  knitr::kable(caption = "Top Words in Grant Titles")
 ```
 
 
-In Figure \@ref(fig:commonwords) we can see that common words will rise to the top but do not convey useful information. For this reason a common approach in text mining is to remove so called 'stop words'. Exactly what counts a stop word may vary depending on the task at hand. However, certain words such as `a, and, the, for, with` and so on are not useful if we want to understand what a text or set of texts is about. 
+In Figure \@ref(tab:commonwords) we can see that common words will rise to the top but do not convey useful information. For this reason a common approach in text mining is to remove so called 'stop words'. Exactly what counts a stop word may vary depending on the task at hand. However, certain words such as `a, and, the, for, with` and so on are not useful if we want to understand what a text or set of texts is about. 
 
-In tidytext there is a built in table of stop words and lists of stop words can be found on the internet that you can readily edit to meet your needs. We can see some of the stop words from tidytext in Figure \@ref(fig:stopwords). In reality tidytext includes three lexicons of stop words (onix, SMART and snowball) that you can use or adapt for your needs. There are also options to add your own.
+In tidytext there is a built in table of stop words and lists of stop words can be found on the internet that you can readily edit to meet your needs. We can see some of the stop words from tidytext in Figure \@ref(tab:stopwords). In reality tidytext includes three lexicons of stop words (onix, SMART and snowball) that you can use or adapt for your needs. There are also options to add your own.
 
 ```{r eval=FALSE, echo=FALSE}
 # DONT RUN
@@ -214,13 +214,12 @@ save(stopwords, file = "data/text_mining/stopwords.rda")
 load("data/text_mining/stopwords.rda")
 
 stopwords %>% 
-  knitr::kable()
+  knitr::kable(caption = "Tidytext Stop Words")
 ```
 
 Applying stop words to our grant titles is straightforward. In the code below we first create a new column that matches words in the stopword list. We then filter them out (the same code can be written in various ways). 
 
 ```{r filterstop, echo=TRUE, eval=FALSE}
-# DONT RUN
 grant_words_clean <- grant_words %>% 
   select(patent_id, word) %>% 
   mutate(stop = word %in% tidytext::stop_words$word) %>% 
@@ -233,7 +232,7 @@ grant_words_clean <- grant_words %>%
 save(grant_words_clean, file = "data/text_mining/grant_words_clean.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE, eval=FALSE}
+```{r eval=FALSE, echo=FALSE}
 # DONT RUN
 # AVOID LOADING THIS AS IS HUGE at 44 million
 load("data/text_mining/grant_words_clean.rda")
@@ -241,7 +240,7 @@ load("data/text_mining/grant_words_clean.rda")
 
 This reduces our 60.8 million row dataset to 44 million, losing nearly 17 million words. 
 
-Now when we count up the words in the grants titles we should get some more useful results as we see in Figure \@ref(fig:cleanwords). 
+Now when we count up the words in the grants titles we should get some more useful results as we see in Figure \@ref(tab:cleanwords). 
 
 ```{r eval=FALSE, echo=FALSE}
 # DONT RUN
@@ -258,20 +257,20 @@ save(grant_words_clean_count, file = "data/text_mining/grant_words_clean_count.r
 load("data/text_mining/grant_words_clean_count.rda")
 
 grant_words_clean_count %>% 
-  knitr::kable()
+  knitr::kable(caption = "Cleaned Words in Patent Titles")
 ```
 
-We can make two observations about Figure \@ref(fig:cleanwords). The first of these is that there are some words that appear quite commonly in patents such as "thereof" that we would want to add to our own stop words list (others might be words like comprising). However, we would want to take care with other potential stop words that may provide us with information about the type of patent claims (such as composition for composition of matter, methods and process) that we would probably want to keep for some purposes (for example if examining patent claims).
+We can make two observations about Figure \@ref(tab:cleanwords). The first of these is that there are some words that appear quite commonly in patents such as "thereof" that we would want to add to our own stop words list (others might be words like comprising). However, we would want to take care with other potential stop words that may provide us with information about the type of patent claims (such as composition for composition of matter, methods and process) that we would probably want to keep for some purposes (for example if examining patent claims).
 
 ### Lemmatizing words
 
 The second observation is that there are pluralised forms of some words, such as method, methods, process, processing, processes and so on. These are words that can be grouped together based on a shared form (normally the singular such as method and process). These groupings are known as lemmas. It is important to emphasise that lemmatizing is distinct from stemming words, which reduces words to a common stem.
 
-There are a variety of tools out there for lemmatizing text. We will use the textstem package by Tyler Rinker [@ref] in R which provides a range of options for lemmatizing words. In the code below we will create a new column with the lemmatized version of words called lemma. We will filter out any digits at the same time. Here we lemmatize the words that we have already applied stop words to. 
+There are a variety of tools out there for lemmatizing text. We will use the `textstem` package by Tyler Rinker [@textstem] in R which provides a range of options for lemmatizing words. In the code below we will create a new column with the lemmatized version of words called lemma. We will filter out any digits at the same time. Here we lemmatize the words that we have already applied stop words to. 
 
-```{r lemmas, message=FALSE, echo=TRUE, eval=FALSE}
+```{r lemmas, eval=FALSE, message=FALSE, echo=TRUE}
 library(textstem)
-# uses large grant words clean set
+
 grant_lemma <- grant_words_clean %>% 
   mutate(word = str_trim(word, side = "both")) %>% 
   mutate(lemma = lemmatize_words(word)) %>% 
@@ -291,7 +290,7 @@ save(grant_lemma, file = "data/text_mining/grant_lemma.rda")
 load("data/text_mining/grant_lemma.rda")
 ```
 
-If we count up our lemmatized words we will see a dramatic change in the scores for terms such as 'method' and 'process' as we see in Figure \@ref(fig:lemmaout).
+If we count up our lemmatized words we will see a dramatic change in the scores for terms such as 'method' and 'process' as we see in Figure \@ref(tab:lemmaout).
 
 ```{r eval=FALSE, echo=FALSE}
 # DONT RUN
@@ -303,12 +302,13 @@ grant_lemma_head <- grant_lemma %>%
 save(grant_lemma_head, file = "data/text_mining/grant_lemma_head.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE, fig.align='center', fig.cap="Outcome of Lemmatization on Words in Patent Titles"}
+```{r lemmaout, eval=TRUE, echo=FALSE, out.width="300px", fig.align='center', fig.cap="Outcome of Lemmatization on Words in Patent Titles"}
 # load head
 load("data/text_mining/grant_lemma_head.rda")
-# THIS DATA IS NOT FROM GRANT WORDS CLEAN AS INCLUDES STOP WORDS!
+
 grant_lemma_head %>% 
-  knitr::kable()
+  head() %>% 
+  knitr::kable(caption = "Outcome of Lemmatization of Words in Patent Titles")
 ```
 
 It is important to be cautious with lemmatizing to ensure that you will be getting what you expect. However, it is a particularly powerful tool for harmonising data to enable aggregation for counts. As we will also see, this is an important for topic modelling and network visualization. 
@@ -320,22 +320,23 @@ What is important in the case of the patent system is that we can leverage the p
 
 To illustrate this we will start by using a well known measure known as "term frequency inverse document frequency" (TFIDF) to understand what terms are distinctive in our set for particular areas of technology. 
 
-### Terms by Technology. 
+## Terms by Technology 
 
 As an experiment we will see what the terms are in four areas of technology using IPC subclasses. For this experiment, we will use examples that are distinctive and some that are likely to overlap, these are:
 
-- Plant agriculture (AO1H), 
+- Plant agriculture (A01H), 
 - Medicines and pharmaceuticals (A61K), 
 - Biotechnology (C12N)
 - Computing (G06F)
 
-To do this we will start by identifying the patent_ids that fall into these subclasses. 
+To do this we will start by identifying the patent_ids that fall into these subclasses with the results shown in Figure \@ref(tab:ipcsubhead). 
 
 ```{r ipcsubset, echo=TRUE, eval=FALSE}
 
 ipc_set <- ipcr %>% 
   select(patent_id, ipc_subclass) %>% 
-  filter(., ipc_subclass == "A01H" | ipc_subclass == "A61K" | ipc_subclass == "C12N" | ipc_subclass == "G06F")
+  filter(., ipc_subclass == "A01H" | ipc_subclass == "A61K" | 
+           ipc_subclass == "C12N" | ipc_subclass == "G06F")
 ```
 
 ```{r eval=FALSE, echo=FALSE}
@@ -346,20 +347,25 @@ ipc_set <- ipcr %>%
   filter(., ipc_subclass == "A01H" | ipc_subclass == "A61K" | ipc_subclass == "C12N" | ipc_subclass == "G06F")
 
 save(ipc_set, file = "data/text_mining/ipc_set.rda")
+
+ipc_set_head <- ipc_set %>% 
+  head()
+
+save(ipc_set_head, file = "data/text_mining/ipc_set_head.rda")
+
 ```
 
-```{r eval=TRUE, echo=FALSE, fig.align='center', fig.cap="IPC Subclasses for TF_IDF"}
+```{r ipcsubhead, eval=TRUE, echo=FALSE, fig.align='center', fig.cap="Selecting IPC Subclasses for TF_IDF"}
 # load data
-load("data/text_mining/ipc_set.rda")
+load("data/text_mining/ipc_set_head.rda")
 
-ipc_set %>%
-  count(ipc_subclass) %>% 
-  knitr::kable()
+ipc_set_head %>%
+  knitr::kable(caption = "IPC Subclasses for TF_IDF")
 ```
 
 This gives us a total of just over 2.4 million patent_ids that have one or more of these classifiers. 
 
-We now join the two tables by the patent_id using `inner_join`. In SQL (here written with dplyr in R) an inner_join is a filtering join that will keep only shared elements in the two tables (the patent_ids). We then count the words and sort them.
+We now join the two tables by the patent_id using `inner_join`. In SQL (here written with `dplyr` in R) an inner join is a filtering join that will keep only shared elements in the two tables (the patent_ids). We then count the words and sort them as we see in Figure \@ref(tab:lemmaipc).
 
 ```{r, eval=FALSE}
 ipc_words <- ipc_set %>% 
@@ -387,16 +393,16 @@ ipc_words_head <- ipc_words %>%
 save(ipc_words_head, file = "data/text_mining/ipc_words_head.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE, fig.align='center', fig.cap="HEAD OF IPC WORDS"}
+```{r lemmaipc, eval=TRUE, echo=FALSE, fig.align='center', fig.cap="Top Lemmatized Words for the IPC Subset"}
 # load head
 load("data/text_mining/ipc_words_head.rda")
 
 ipc_words_head %>% 
-  knitr::kable()
+  knitr::kable(caption = "Examples of Lemmatized Words by IPC")
 ```
 
 
-For the calculation that we are about to make using the code provided by Silge and Robinson we first need to generate a count of the total number of words for each of our technology areas (subclasses). To do that we group the table by 'ipc_subclass' so that we can count up the words in each subclass (rather than the whole table). It is important to ungroup the data at the end to avoid confusion later on created by counting using a grouped table. 
+For the calculation that we are about to make using the code provided by Silge and Robinson we first need to generate a count of the total number of words for each of our technology areas (subclasses). To do that we group the table by 'ipc_subclass' so that we can count up the words in each subclass (rather than the whole table). It is important to `ungroup()` the data at the end. The reason for this is that without ungrouping any future operations such as counts will be performed on the grouped table leading to unexpected results and considerable confusion. 
 
 ```{r echo=TRUE, eval=FALSE}
 ipc_total_words <- ipc_words %>% 
@@ -411,25 +417,26 @@ ipc_total_words <- ipc_words %>%
 save(ipc_total_words, file = "data/text_mining/ipc_total_words.rda")
 ```
 
-```{r echo=FALSE, eval=TRUE}
+```{r eval=TRUE, echo=FALSE}
 # load data
 load("~/Documents/handbook2022/data/text_mining/ipc_total_words.rda")
 ```
 
-Next we join the two tables together using left_join to keep everything in our original ipc_words table (that we will be applying the TFIDF to).
+Next we join the two tables together using `left_join()`. Unlike `inner_join()`, `left_join()` will keep everything in our original ipc_words table `on the left hand side` (that we will be applying the TFIDF to).
 
-```{r}
+```{r eval=FALSE}
 ipc_words <- ipc_words %>% 
   left_join(ipc_total_words, by = "ipc_subclass")
 ```
 
-We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in  Figure \@ref(fig:tfid). 
+We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in  Figure \@ref(fig:tfidfig). 
 
-```{r tfid}
+```{r eval=FALSE}
 library(tidytext)
 ipc_words_tfid <- ipc_words %>% 
   bind_tf_idf(word, ipc_subclass, n) %>% 
   arrange(desc(tf_idf))
+
 ipc_words_tfid
 ```
 
@@ -444,23 +451,27 @@ ipc_words_tfid_head <- ipc_words_tfid %>%
 save(ipc_words_tfid_head, file = "data/text_mining/ipc_words_tfid_head.rda")
 ```
 
-```{r echo=FALSE, eval=TRUE}
+```{r eval=FALSE, echo=FALSE}
+# DONT RUN
 load("data/text_mining/ipc_words_tfid.rda")
 ```
 
-```{r eval=TRUE, echo=FALSE, fig.align='center', fig.cap="HEAD OF IPC WORDS"}
+```{r echo=FALSE, eval=TRUE}
 # load head
 load("data/text_mining/ipc_words_tfid_head.rda")
+```
 
+
+```{r tfidfig, echo=FALSE, eval=FALSE, fig.cap="Term Frequency, Inverse Frequency and TFIDF Scores"}
 ipc_words_tfid_head %>% 
-  knitr::kable()
+  knitr::kable(caption ="Term Frequency, Inverse Frequency and TFIDF Scores")
 ```
 
 The application of the bind_tf_idf function gives us a term frequency score (tf) an inverse document frequency score (idf) and a term frequency inverse document frequency score as a product of term frequency and inverse document frequency. In straightforward terms, this gives us a calculation of how distinctive a particular term is in the set of words within a document or group of documents.
 
 We can visualise the distinctive terms from the titles of publications for the four distinctive subclasses in Figure \@ref(fig:tfidplot). 
 
-```{r tfidplot, echo=TRUE, eval=FALSE}
+```{r tfidplotsetup, eval=FALSE, echo=TRUE}
 
 ipc_names <- c(
   'A01H'="Plant Agriculture (A01H)",
@@ -478,21 +489,22 @@ ipc_words_tfid %>%
   ggplot(aes(word, tf_idf, fill = ipc_subclass)) +
   geom_col(show.legend = FALSE) +
   labs(x = NULL, y = "tf_idf") +
-  facet_wrap(ipc_subclass ~., labeller = as_labeller(ipc_names), ncol = 2, scales = "free") +
+  facet_wrap(ipc_subclass ~., labeller = as_labeller(ipc_names), ncol = 2, 
+             scales = "free") +
   coord_flip()
            
 ```
 
-```{r echo=FALSE, fig.align='center', fig.cap="TFIDF scores for distinctive terms in patent titles by IPC subclass"}
+```{r tfidplot, echo=FALSE, fig.align='center', out.width = "100%", fig.cap="TFIDF scores for distinctive terms in patent titles by IPC subclass"}
 knitr::include_graphics("images/textmining/tfidf.png")
 ```
 
 <!---[What is going on with C12N as it axis is scientific and it is not ranking scores quite right]--->
 
-In the original example that we are copying here from Silge and Robinson, the different novels written by Jane Austen were mainly distinguished not by the language used but by the names (proper nouns) of the individual characters in each novel, such as Darcy in _Pride and Prejudice_ and Emma and Knightley in Emma. _In contrast_, when ranked by tfidf our patent data displays very distinctive terms associated with each subclass, with some overlap between A01H and C12N. In the case of plant agriculture and biotechnology this will arise from genetically modified plants (which fall into both categories of the system), Note that in the case of A61K we appear to have some partial words (e.g. yl) arising from the process of splitting the text into tokens. A solution here would be to filter out words with 2 or 3 characters or less unless there is a good reason not to. 
+In the original example that we are copying here from Silge and Robinson, the different novels written by Jane Austen were mainly distinguished not by the language used but by the names (proper nouns) of the individual characters in each novel, such as Darcy in _Pride and Prejudice_ and Emma and Knightley in _Emma_. In contrast, when ranked by tfidf our patent data displays very distinctive terms associated with each subclass, with some overlap between A01H and C12N. In the case of plant agriculture and biotechnology this will arise from genetically modified plants (which fall into both categories of the system), Note that in the case of A61K we appear to have some partial words (e.g. yl) arising from the process of splitting the text into tokens. A solution here would be to filter out words with 2 or 3 characters or less unless there is a good reason not to. 
 This example quite vividly illustrates the point that term frequency inverse document frequency, and its multiple variants in use by search engines, is a very powerful means of picking out distinctive terms in groups of documents and for modelling the topics that these documents are about. However, these examples also illustrate the importance of the patent classification.
 
-### Combining Text Mining with Patent Classification
+## Combining Text Mining with Patent Classification
 
 In reality, the distinctive terms that we observe in Figure \@ref(fig:tfidplot) reinforce the point made in the last chapter: the patent classification is our friend. In contrast with many other forms of document systems the patent system uses a sophisticated human and machine curated international classification system to describe the content of patent documents. The importance of engaging with the classification to assist with text mining is revealed by the terms in the different subclasses: the classification does a lot of work for us. Once we understand the classification we are able to target our attention to areas of the system that we are interested in. Put another way, rather than starting by text mining the titles or other text elements of all patent documents we will save ourselves a lot of time and effort by targeting our efforts to specific areas of the system using the international patent classification as our guide.
 
@@ -505,7 +517,7 @@ grant_lemma %>%
   count(ipc_subclass, sort = TRUE)
 ```
 
-```{r echo=FALSE, eval=FALSE}
+```{r eval=FALSE, echo=FALSE}
 # DONT RUN
 # save data
 drones_lemma <- grant_lemma %>% 
@@ -532,9 +544,9 @@ In practice, we would want to use larger text segments such as titles and abstra
 
 We can scale up this example to focus on a broader topic area of wider policy interest: biodiversity. In previous work, Oldham, Hall and Forero text mined the full text of 11 million patent documents for millions of taxonomic species names using regular expressions [@lens.org/029-457-486-798-609]. This research also revealed that it is possible to capture the majority of biodiversity related terms by focusing on specific areas of the patent classification. Use of a set of English terms within those areas of the system would then capture the universe of documents that need to be captured. The two elements of that search strategy involved a set of terms that commonly appear in biodiversity related documents and a set of IPC classes.
 
-The search terms are presented in Figure \@ref(fig:biodiversityipcwords). As these are search terms that are designed to be used in a search engine they include plurals and are not stemmed to avoid capturing many irrelevant terms. 
+The search terms are presented below. As these are search terms that are designed to be used in a search engine they include plurals and are not stemmed to avoid capturing many irrelevant terms. 
 
-```{r biodiversityipcwords, eval=FALSE}
+```{r biodiversityipcwords, eval=FALSE, fig.cap="Biodivesity Key Words"}
 biodiversity_ipc_words <- tibble(word = c("species","genus","family","order","phylum","class","kingdom","tribe","dna",
   "nucleic","nucleotide","amino","polypeptide","sequence","seq","seqid", "protein",
   "proteins","peptides","peptide","enzyme","enzymes","plant","plants","animal","animals","mammal",
@@ -545,8 +557,7 @@ biodiversity_ipc_words <- tibble(word = c("species","genus","family","order","ph
   "accession")) 
 ```
 
-For this example we will scale up to include words from both the titles and abstracts of US granted patents. We will do this by uniting the titles and the abstracts into one string and then breaking that into words. Note that this is RAM intensive and if working on a machine with limited RAM you may wish to filter the grants data to a specific year to try this out. As an alternative, it is now very cost effective to create a powerful virtual machine with a cloud computing service (Amazon, Google, Microsoft etc.) that can be destroyed when a task is completed. The use of cloud computing is beyond the scope of this Handbook but is extremely useful for working with data at scale using either VantagePoint (on Windows Server) or with programming languages such as R, Python, Spark or Google Big Query. Many guides to getting started with creating virtual machines are available online and packages exist in R and Python that allow you to create and manage virtual machines from your desktop. Other options include Remote Desktop (for accessing remote virtual Windows machines as if they are your local desktop). 
-
+For this example we will scale up to include words from both the titles and abstracts of US granted patents. We will do this by uniting the titles and the abstracts into one string and then breaking that into words. Note that this is RAM intensive and if working on a machine with limited RAM you may wish to filter the grants data to a specific year to try this out. As an alternative, it is now very cost effective to create a powerful virtual machine with a cloud computing service (Amazon Web Services, Google Cloud, Microsoft Azure etc.) that can be destroyed when a task is completed. The use of cloud computing is beyond the scope of this Handbook but is extremely useful for working with data at scale using either VantagePoint (on Windows Server) or with programming languages such as R, Python, Spark or Google Big Query. Many guides to getting started with creating virtual machines are available online and packages exist in R and Python that allow you to create and manage virtual machines from your desktop. Other options include Remote Desktop (for accessing remote virtual Windows machines as if they are your local desktop). 
 We start by restricting the data to the identifier and title and abstract which we combine together before splitting into words. We then remove stop words. For this illustration we will not perform additional clean up steps.
 
 ```{r createwordsta, eval=FALSE, echo=TRUE}
@@ -599,7 +610,8 @@ save(biodiversity_words, file = "data/text_mining/biodiversity_words.rda")
 
 ```
 
-```{r loadbiodiversitywords, echo=FALSE, eval=TRUE}
+```{r loadbiodiversitywords, eval=TRUE, echo=FALSE}
+# DONT RUN unless rebuilding
 load("data/text_mining/biodiversity_words.rda")
 ```
 
@@ -612,35 +624,32 @@ biodiversity_words_head <- biodiversity_words %>%
 save(biodiversity_words_head, file = "data/text_mining/biodiversity_words_head.rda")
 ```
 
+This will produce a dataset with our biodiversity terms and 2084 IPC subclasses. Figure \@ref(tab:ipcrank) shows the top 20 subclasses. 
 
-This will produce a dataset with our biodiversity terms and 2084 IPC subclasses. Figure \@ref(fig:ipcrank) shows the top 20 subclasses. 
-
-```{r ipcrank, echo=TRUE, eval=TRUE, fig.align='center', fig.cap="Top 20 IPC Subclasses for Biodiversity Terms"}
+```{r ipcrank, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Top 20 IPC Subclasses for Biodiversity Terms"}
 
 load("data/text_mining/biodiversity_words_head.rda")
 
 biodiversity_words_head %>% 
-  knitr::kable()
+  knitr::kable(caption = "Top 20 IPC Subclasses for Biodiversity Terms")
 ```
 
-A total of 1,773 IPC subclasses include our biodiversity terms. In considering Figure \@ref(fig:ipcrank) we can make three key observations. The first of these is that we have a clear concentration of the biodiversity related terms in certain areas of the patent system. The second observation is that this data includes subclasses in section G and H of the classification that are very unlikely to have anything to do with biodiversity as such. For example, words in our set such as 'order' for the taxonomic rank are likely to create a lot of noise from systems that involve ordering in all its various forms (and should perhaps be removed). The third observation is that we can safely exclude areas that are likely to constitute noise by classification.
+A total of 1,773 IPC subclasses include our biodiversity terms. In considering Figure \@ref(tab:ipcrank) we can make three key observations. The first of these is that we have a clear concentration of the biodiversity related terms in certain areas of the patent system. The second observation is that this data includes subclasses in section G and H of the classification that are very unlikely to have anything to do with biodiversity as such. For example, words in our set such as 'order' for the taxonomic rank are likely to create a lot of noise from systems that involve ordering in all its various forms (and should perhaps be removed). The third observation is that we can safely exclude areas that are likely to constitute noise by classification.
 
 One feature of the patent system is that documents receive multiple classification codes to describe the contents of a document. Excluding subclasses such as G01N will only have the effect of excluding documents that don't contain one of the other 'keep' classifiers. That is, documents classified as both C12N and GO1N will be retained because of the presence of C12N. Drawing on this logic we can arrive at a set of subclasses that can be used as a filter for the biodiversity terms and constitute `core` classifiers for biodiversity. Note that in one case (subclass C02F) we would confine a search engine based search to C02F3 (for biological treatments of waste water and sewage) as the only relevant group in the subclass. 
 
-<!--- STOPPED HERE--->
-
 ```{r echo=TRUE, eval=FALSE}
-biodiversity_ipc_subclass <- tibble(ipc_subclass = c("A01H","A01K","A01N","A23L","A23K","A23G","A23C","A61K","A61Q",
-                                             "C02F","C07C","C07D","C07H","C07K","C08H","C08L","C09B","C09D",
-                                             "C09G","C09J","CO9K","C11B","C11C","C11D","C12M","C12N","C12P",
-                                             "C12Q","C12R","C12S","C40B"))
+biodiversity_ipc_subclass <- tibble(
+  ipc_subclass = c("A01H","A01K","A01N","A23L","A23K","A23G","A23C","A61K","A61Q",
+                   "C02F","C07C","C07D","C07H","C07K","C08H","C08L","C09B","C09D",
+                   "C09G","C09J","CO9K","C11B","C11C","C11D","C12M","C12N","C12P",
+                   "C12Q","C12R","C12S","C40B"))
 ```
 
 
+At present we have a set of biodiversity words. What we want to do next is to filter the documents to the records that contain a biodiversity word AND appear in one of the subclasses above. We then want to count up the patent_ids and obtain the grants (containing the titles, abstracts and other information) for further analysis. We achieve this by first filtering the data to those containing the subclasses, then we count the patent identifiers to create a distinct set and join on to the main patent grants table using the patent ids. Figure \@ref(tab:loadbiopatids) shows the outome of joining the data back together again. 
 
-At present we have a set of biodiversity words. What we want to do next is to filter the documents to the records that contain a biodiversity word AND appear in one of the subclasses above. We then want to count up the patent_ids and obtain the grants (containing the titles, abstracts and other information) for further analysis. We achieve this by first filtering the data to those containing the subclasses, then we count the patent identifiers to create a distinct set and join on to the main patent grants table using the patent ids. 
-
-```{r jointotexts, echo=FALSE, eval=FALSE }
+```{r jointotexts, echo=FALSE, eval=FALSE}
 biodiversity_patent_ids <- biodiversity_words %>% 
   filter(ipc_subclass %in% biodiversity_ipc_subclass$ipc_subclass) %>% 
   count(patent_id) %>% 
@@ -658,17 +667,17 @@ biodiversity_patent_ids_head <- biodiversity_patent_ids %>%
 save(biodiversity_patent_ids_head, file = "data/text_mining/biodiversity_patent_ids_head.rda")
 ```
 
-```{r loadbiodiversitypatentids, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Joining biodiversity words filtered by IPC subclasses to identify the original texts"}
+```{r loadbiopatids, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Joining biodiversity words filtered by IPC subclasses to identify the original texts"}
 load("data/text_mining/biodiversity_patent_ids_head.rda")
 
 biodiversity_patent_ids_head %>% 
   select(patent_id, publication_number, title) %>% 
-  knitr::kable()
+  knitr::kable(caption = "Joining biodiversity words filtered by IPC subclasses to identify the original texts")
 ```
 
 At the end of this process we have 345,975 patent grants that can used for further analysis using text mining techniques. Our purpose here has been to illustrate how the use of text mining can be combined with the use of the patent classification to create a dataset that is much more targeted and a lot easier to work with. Put another way, it is a mistake to see the patent system as a giant set of texts that all need to be processed. It is better to approach the patent system as as a collection of texts that have already been subject to multi-label classification. That classification can be used to filter to collections of texts for further analysis. 
 
-More advanced approaches to those suggested here for refining the texts to be searched, such as the use of matrices and network analysis were discussed in the previous chapter. Other options include selecting texts on the IPC group or subgroup level (bearing in mind that for international research not all patent offices will consistently use these levels). The key point here however is that we have moved from a starting set of 7.9 million patent documents and reduced the set to 338,837 documents that are closer to a target subject area. In the process we have reduced the amount of compute effort required for analysis and also the intellectual effort required to handle such large volumes of text.
+More advanced approaches to those suggested here for refining the texts to be searched, such as the use of matrices and network analysis were discussed in the previous chapter and we return to this topic below. Other options include selecting texts on the IPC group or subgroup level (bearing in mind that for international research not all patent offices will consistently use these levels). The key point here however is that we have moved from a starting set of 7.9 million patent documents and reduced the set to 338,837 documents that are closer to a target subject area. In the process we have reduced the amount of compute effort required for analysis and also the intellectual effort required to handle such large volumes of text.
 
 ## From words to phrases (ngrams)
 
@@ -687,11 +696,11 @@ biodiversity_texts <- biodiversity_patent_ids %>%
 save(biodiversity_texts, file = "data/text_mining/biodiversity_texts.rda")
 ```
 
-```{r loadbiodiversitytexts, echo=FALSE, eval=TRUE}
+```{r loadbiodiversitytexts, echo=FALSE, eval=FALSE}
 load("data/text_mining/biodiversity_texts.rda")
 ```
 
-```{r create_biodiversitybigrams, echo=FALSE, eval=TRUE}
+```{r create_biodiversitybigrams, echo=FALSE, eval=FALSE}
 # create a set of bigrams
 biodiversity_bigrams <- biodiversity_texts %>% 
   unnest_ngrams(., bigram, text, 2)
@@ -703,7 +712,7 @@ biodiversity_bigrams <- biodiversity_texts %>%
 save(biodiversity_bigrams, file = "data/text_mining/biodiversity_bigrams.rda")
 ```
 
-```{r loadbiodiversitybigrams, echo=FALSE, eval=TRUE}
+```{r loadbiodiversitybigrams, echo=FALSE, eval=FALSE}
 # DONT RUN
 # save data
 
@@ -715,14 +724,15 @@ biodiversity_bigrams_head <- biodiversity_bigrams %>%
 save(biodiversity_bigrams_head, file = "data/text_mining/biodiversity_bigrams_head.rda")
 ```
 
-Figure \@ref(fig:head_biodiversitybigrams) shows a selection of the bigrams. 
+Figure \@ref(tab:headbigrams) shows a selection of the bigrams appearing in the biodiversity related texts. 
 
-```{r head_biodiversitybigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Biodiversity Bigrams"}
+```{r headbigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Biodiversity Bigrams"}
 # load data
 load("data/text_mining/biodiversity_bigrams_head.rda")
 
 biodiversity_bigrams_head %>% 
-  knitr::kable()
+  head() %>% 
+  knitr::kable(caption = "Biodiversity Related Bigrams")
 ```
 
 We have created a dataset of bigrams that contains 31,612,494 rows with a few lines of code. However, if we inspect the bigrams we will see that the data contains phrases including many stop words. In reality, in patent analysis we are almost always interested in nouns, proper nouns and noun phrases. 
@@ -750,8 +760,8 @@ clean_biodiversity_bigrams <- biodiversity_bigrams %>%
 save(clean_biodiversity_bigrams, file = "data/text_mining/clean_biodiversity_bigrams.rda")
 ```
 
-```{r loadcleanbiodiversitybigrams}
-# load 
+```{r loadcleanbiodiversitybigrams, eval=FALSE, echo=FALSE}
+# DONT RUN
 load("data/text_mining/clean_biodiversity_bigrams.rda")
 
 clean_biodiversity_bigrams_head <- clean_biodiversity_bigrams %>% 
@@ -760,22 +770,23 @@ clean_biodiversity_bigrams_head <- clean_biodiversity_bigrams %>%
 save(clean_biodiversity_bigrams_head, file = "data/text_mining/clean_biodiversity_bigrams_head.rda")
 ```
 
-As before this will radically reduce the size of the dataset to 9,321,285 although the set may still contain many irrelevant phrases. 
+As before this will radically reduce the size of the dataset to 9,321,285 although the set may still contain many irrelevant phrases as we can see in Figure \@ref(tab:biodbigramhead). 
 
-```{r biodiversitybigramhead, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Biodiversity Bigram Terms"}
+```{r biodbigramhead, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Biodiversity Bigram Terms"}
 
 load("data/text_mining/clean_biodiversity_bigrams_head.rda")
 
 clean_biodiversity_bigrams_head %>% 
-  knitr::kable()
+  knitr::kable(caption = "Biodiversity Bigram Terms")
 ```
 
 
-We now have a set of bigrams with many irrelevant phrases. We could simply filter these phrases for terms of interest. In the chapter on patent citation analysis we focus on genome editing technology which is closely linked to genome engineering and synthetic biology. The extraction of bigrams allows us to identify patent grants containing these terms of interest in the title or abstracts.
+We now have a set of bigrams with many irrelevant phrases. We could simply filter these phrases for terms of interest. In the chapter on patent citation analysis we focus on genome editing technology which is closely linked to genome engineering and synthetic biology. The extraction of bigrams allows us to identify patent grants containing these terms of interest in the title or abstracts as we can see in the code below and Figure \@ref(tab:showgenebigrams).
 
 ```{r echo=TRUE, eval=FALSE}
 clean_biodiversity_bigrams %>% 
-  filter(bigram == "genome editing" | bigram == "gene editing" | bigram == "crispr cas9" | bigram == "synthetic biology" | bigram == "genome engineering") %>% 
+  filter(bigram == "genome editing" | bigram == "gene editing" | bigram == "crispr cas9" |
+           bigram == "synthetic biology" | bigram == "genome engineering") %>% 
   count(bigram)
 ```
 
@@ -788,17 +799,17 @@ gene_editing_bigrams <- clean_biodiversity_bigrams %>%
 save(gene_editing_bigrams, file = "data/text_mining/gene_editing_bigrams.rda")
 ```
 
-```{r showgeneeditingbigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Genome Editing Bigrams"}
+```{r sshowgenebigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Genome Editing Bigrams"}
 load("data/text_mining/gene_editing_bigrams.rda")
 
 gene_editing_bigrams %>% 
   head() %>% 
-  knitr::kable()
+  knitr::kable(caption = "Genome Editing Bigrams")
 ```
 
 This is a powerful technique for identifying useful documents based on dictionaries of terms (bigrams or unigrams). At an exploratory stage it also be very useful to arrange a bigrams set alphabetically so that you can see what terms are in the immediate vicinity of a target term. This can pick up variants that will improve data capture and links to correlations between terms discussed below. 
 
-However, we are still dealing with 9.5 million terms. Can we make this more manageable? The answer is yes. We can apply the tf_idf calculations we used for unigrams above to the bigrams. In this case we are applying the tf_idf calculation to the 345,975 patent grants in the biodiversity set (rather than IPC subclasses) to ask the question: What bigrams are distinctive to each document? As with the previous example, the code provided by Silge and Robinson  in _Text Mining with R_ is straightforward. 
+However, we are still dealing with 9.5 million terms. Can we make this more manageable? The answer is yes. We can apply the tf_idf calculations we used for unigrams above to the bigrams. In this case we are applying the tf_idf calculation to the 345,975 patent grants in the biodiversity set (rather than IPC subclasses) to ask the question: What bigrams are distinctive to each document? As with the previous example, the code provided by Silge and Robinson  in _Text Mining with R_ is straightforward [@tidytext]. 
 
 ```{r biodiversity_bigrams_tfidf, echo=TRUE, eval=FALSE}
 biodiversity_bigrams_tfidf <- clean_biodiversity_bigrams %>% 
@@ -848,7 +859,7 @@ gene_editing_tfidf <- biodiversity_bigrams_tfidf %>%
 save(gene_editing_tfidf, file = "data/text_mining/gene_editing_tfidf.rda")
 ```
 
-```{r echo=TRUE, eval=TRUE}
+```{r echo=FALSE, eval=TRUE}
 load("data/text_mining/gene_editing_tfidf.rda")
 ```
 
@@ -929,17 +940,24 @@ One of the most useful of these measures in text mining is co-occurrence. That i
 
 We can take a look at the phrases linked to our target terms in Figure \@ref(fig:gebigrams) below.
 
-```{r gebigrams1}
+```{r echo=FALSE}
 load("data/text_mining/gene_editing_tfidf.rda")
+
+```
+
+
+```{r gebigrams1, echo=FALSE}
 gene_editing_tfidf %>% 
-  arrange(patent_id)
+  arrange(patent_id) %>% 
+  head(20) %>% 
+  knitr::kable(caption = "Genome editing phrases")
 ```
 
 What we are seeking to understand using this data is what are the top co-occurring terms. To do this we will cast the data into a matrix where the bigrams are mapped against each other producing a correlation value. Using the widyr package we then pull the data back into columns with the recorded value. 
 
-There are a variety of packages for calculating correlations and cooccurrences with texts. We will use `udpipe` package by Jan Wijffels for illustration of this approach [@ref]. 
+There are a variety of packages for calculating correlations and cooccurrences with texts. We will use `udpipe` package by Jan Wijffels for illustration of this approach [@udpipe]. The `widyr` package offers a `pairwise_count()` function that achieves the same thing in fewer steps. However, udpipe is easy to use and it also offers additional advantages such as parts of speech tagging (POS) for nouns, verbs and adjectives [@widyr]. 
 
-First, we calculate term frequencies for our bigrams (in practice we have these but we illustrate from scratch here) using the patent_id as the identifier and the bigram. Next, we cast the data into a matrix of the bigrams against the bigrams (dtm). This transforms our dataset containing 4,430 rows into a large and sparse matrix with 3.6 million observations (where most values are zero because there is no correlation). Then apply a correlation function (in this case Pearson's, also known as Pearson's R,  but a range of other correlation functions are available) to obtain the correlation coefficient. Finally, the matrix is transformed back into a data.frame that drops empty (0) items in the sparse matrix. In the cooccurrence data.frame term1 is the source and terms 2 is the target with a range of scores expressed from -0.n to 1. 
+First, we calculate term frequencies for our bigrams (in practice we have these but we illustrate from scratch here) using the patent_id as the identifier and the bigram. Next, we cast the data into a matrix of the bigrams against the bigrams (dtm). This transforms our dataset containing 4,430 rows into a large and sparse matrix with 3.6 million observations (where most values are zero because there is no correlation). Then apply a correlation function (in this case Pearson's, also known as Pearson's R,  but a range of other correlation functions are available) to obtain the correlation coefficient. Finally, the matrix is transformed back into a data.frame that drops empty (0) items in the sparse matrix. In the cooccurrence data frame term1 is the source and term2 is the target with a range of scores expressed from -0.n to 1. 
 
 ```{r coocurrence, echo=TRUE, eval=FALSE}
 library(udpipe)
@@ -972,7 +990,7 @@ knitr::include_graphics("images/textmining/coocc.png")
 
 --->
 
-The cooccurrence value for the matching term (in this case "gene editing") is always 1. Inside the actual matrix this displays on the diagonal in the centre of the matrix and gives rise to the expression "removing the diagonal" or self-reference. We can do this by filtering to keep any value that does not equal 1 as we see in Figure \@ref(fig:coocclean). 
+The cooccurrence value for the matching term (in this case "genome editing") is always 1. Inside the actual matrix this displays on the diagonal in the centre of the matrix and gives rise to the expression "removing the diagonal" or self-reference. We can do this by filtering to keep any value that does not equal 1 as we see in Figure \@ref(tab:coocclean). 
 
 ```{r creatcooccurenceclean, echo=FALSE, eval=FALSE}
 cooccurrence_clean <- cooccurrence %>% 
@@ -997,14 +1015,14 @@ save(cooccurrence_clean_head, file = "data/text_mining/cooccurrence_clean_head.r
 load("data/text_mining/cooccurrence_clean_head.rda")
 
 cooccurrence_clean_head %>% 
-  knitr::kable()
+  knitr::kable(caption = "Ranked Cooccurrence Scores for Gene Editing with Diagonal Removed")
 ```
 
 <!---[What is going on with the value 1 in the table. there seems to be 1 and 1.n]--->
 
 The data from the title and abstracts using tf_idf now suggests the strong correlation between gene editing and genome engineering in our example dataset. 
 
-In common with the network visualisations discussed in the last chapter, this data can also be visualised in a network where term1 constitutes the source node, term2 the target node and cooc (or n) the weight of the edge between source and target nodes. For simplicity in presentation we will select only terms with a cooccurence score over 30 for genome editing. 
+In common with the network visualisations discussed in the last chapter, this data can also be visualised in a network where term1 constitutes the source node, term2 the target node and cooc (or n) the weight of the edge between source and target nodes. For simplicity in presentation we will select only terms with a cooccurence score over .10 for genome editing. The code here is adapted directly from the `udpipe` documentation.
 
 ```{r genetwork, eval=FALSE}
 library(igraph)
@@ -1028,7 +1046,7 @@ knitr::include_graphics("images/textmining/genomeediting.png")
 ```
 
 
-The visualisation of networks is a powerful tool for making decisions about how to proceed with analysis. In particular, visualisation of networks of terms is an extremely useful device when seeking directions for further analysis, for example on the use of genome editing in therapeutics or in agriculture and other applications. A more thorough exploration than that provided here would have taken the combined set of terms to 
+The visualisation of networks is a powerful tool for making decisions about how to proceed with analysis. In particular, visualisation of networks of terms is an extremely useful device when seeking directions for further analysis, for example on the use of genome editing in therapeutics or in agriculture and other applications. 
 
 The use of these methods is not confined to patent researchers with programming skills. VantagePoint from Search Technology Inc provides many of these tools out of the box and has considerable strength of allowing greater freedom and precision in interactive exploration and refinement of the data.
 
