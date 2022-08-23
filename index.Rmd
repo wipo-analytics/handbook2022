@@ -4,7 +4,7 @@ author: "Paul Oldham"
 date: "`r Sys.Date()`"
 site: bookdown::bookdown_site
 documentclass: book
-bibliography: [book.bib, crossref.bib]
+bibliography: [book.bib, crossref.bib, grateful-refs.bib]
 biblio-style: apalike
 link-citations: yes
 description: "The WIPO Patent Analytics Handbook."
@@ -150,5 +150,3 @@ When the drones package is installed review the contents of each dataset in the 
 library(drones)
 drones <- drones::drones
 ```
-
-
