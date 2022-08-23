@@ -1,6 +1,7 @@
 bookdown::gitbook:
   css: style.css
   config:
+    show_codefolding_buttons: true
     toc:
       before: |
         <li><a href="./">The WIPO Patent Analytics Handbook</a></li>
