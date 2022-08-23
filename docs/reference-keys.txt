@@ -75,12 +75,13 @@ tab:cleanwords
 tab:lemmaout
 tab:ipcsubhead
 tab:lemmaipc
+tab:tfidfig
 fig:tfidplot
 tab:ipcrank
 tab:loadbiopatids
 tab:headbigrams
 tab:biodbigramhead
-tab:sshowgenebigrams
+tab:showgenebigrams
 fig:termplot
 tab:gebigrams1
 fig:gebigrams

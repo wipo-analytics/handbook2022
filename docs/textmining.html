@@ -1531,13 +1531,162 @@ method
 <p>Next we join the two tables together using <code>left_join()</code>. Unlike <code>inner_join()</code>, <code>left_join()</code> will keep everything in our original ipc_words table <code>on the left hand side</code> (that we will be applying the TFIDF to).</p>
 <div class="sourceCode" id="cb83"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb83-1"><a href="textmining.html#cb83-1" aria-hidden="true" tabindex="-1"></a>ipc_words <span class="ot">&lt;-</span> ipc_words <span class="sc">%&gt;%</span> </span>
 <span id="cb83-2"><a href="textmining.html#cb83-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ipc_total_words, <span class="at">by =</span> <span class="st">&quot;ipc_subclass&quot;</span>)</span></code></pre></div>
-<p>We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in Figure <a href="#fig:tfidfig"><strong>??</strong></a>.</p>
+<p>We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in Figure <a href="textmining.html#tab:tfidfig">6.10</a>.</p>
 <div class="sourceCode" id="cb84"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb84-1"><a href="textmining.html#cb84-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidytext)</span>
 <span id="cb84-2"><a href="textmining.html#cb84-2" aria-hidden="true" tabindex="-1"></a>ipc_words_tfid <span class="ot">&lt;-</span> ipc_words <span class="sc">%&gt;%</span> </span>
 <span id="cb84-3"><a href="textmining.html#cb84-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_tf_idf</span>(word, ipc_subclass, n) <span class="sc">%&gt;%</span> </span>
 <span id="cb84-4"><a href="textmining.html#cb84-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(tf_idf))</span>
 <span id="cb84-5"><a href="textmining.html#cb84-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb84-6"><a href="textmining.html#cb84-6" aria-hidden="true" tabindex="-1"></a>ipc_words_tfid</span></code></pre></div>
+<table>
+<caption>
+<span id="tab:tfidfig">Table 6.10: </span>Term Frequency, Inverse Frequency and TFIDF Scores
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+ipc_subclass
+</th>
+<th style="text-align:left;">
+word
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+tf
+</th>
+<th style="text-align:right;">
+idf
+</th>
+<th style="text-align:right;">
+tf_idf
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+A01H
+</td>
+<td style="text-align:left;">
+inbred
+</td>
+<td style="text-align:right;">
+5275
+</td>
+<td style="text-align:right;">
+0.0149659
+</td>
+<td style="text-align:right;">
+0.6931472
+</td>
+<td style="text-align:right;">
+0.0103735
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+A01H
+</td>
+<td style="text-align:left;">
+cultivar
+</td>
+<td style="text-align:right;">
+7995
+</td>
+<td style="text-align:right;">
+0.0226828
+</td>
+<td style="text-align:right;">
+0.2876821
+</td>
+<td style="text-align:right;">
+0.0065254
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+A01H
+</td>
+<td style="text-align:left;">
+rose
+</td>
+<td style="text-align:right;">
+3421
+</td>
+<td style="text-align:right;">
+0.0097058
+</td>
+<td style="text-align:right;">
+0.2876821
+</td>
+<td style="text-align:right;">
+0.0027922
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+A01H
+</td>
+<td style="text-align:left;">
+calibrachoa
+</td>
+<td style="text-align:right;">
+641
+</td>
+<td style="text-align:right;">
+0.0018186
+</td>
+<td style="text-align:right;">
+1.3862944
+</td>
+<td style="text-align:right;">
+0.0025211
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+A01H
+</td>
+<td style="text-align:left;">
+hydrangea
+</td>
+<td style="text-align:right;">
+584
+</td>
+<td style="text-align:right;">
+0.0016569
+</td>
+<td style="text-align:right;">
+1.3862944
+</td>
+<td style="text-align:right;">
+0.0022969
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+G06F
+</td>
+<td style="text-align:left;">
+server
+</td>
+<td style="text-align:right;">
+22500
+</td>
+<td style="text-align:right;">
+0.0016522
+</td>
+<td style="text-align:right;">
+1.3862944
+</td>
+<td style="text-align:right;">
+0.0022905
+</td>
+</tr>
+</tbody>
+</table>
 <p>The application of the bind_tf_idf function gives us a term frequency score (tf) an inverse document frequency score (idf) and a term frequency inverse document frequency score as a product of term frequency and inverse document frequency. In straightforward terms, this gives us a calculation of how distinctive a particular term is in the set of words within a document or group of documents.</p>
 <p>We can visualise the distinctive terms from the titles of publications for the four distinctive subclasses in Figure <a href="textmining.html#fig:tfidplot">6.1</a>.</p>
 <div class="sourceCode" id="cb85"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb85-1"><a href="textmining.html#cb85-1" aria-hidden="true" tabindex="-1"></a>ipc_names <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
@@ -1727,10 +1876,10 @@ detection
 <div class="sourceCode" id="cb89"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb89-1"><a href="textmining.html#cb89-1" aria-hidden="true" tabindex="-1"></a>biodiversity_words <span class="ot">&lt;-</span> words_ta <span class="sc">%&gt;%</span> </span>
 <span id="cb89-2"><a href="textmining.html#cb89-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(biodiversity_ipc_words, <span class="at">by =</span> <span class="st">&quot;word&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb89-3"><a href="textmining.html#cb89-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ipcr, <span class="at">by =</span> <span class="st">&quot;patent_id&quot;</span>)</span></code></pre></div>
-<p>This will produce a dataset with our biodiversity terms and 2084 IPC subclasses. Figure <a href="textmining.html#tab:ipcrank">6.10</a> shows the top 20 subclasses.</p>
+<p>This will produce a dataset with our biodiversity terms and 2084 IPC subclasses. Figure <a href="textmining.html#tab:ipcrank">6.11</a> shows the top 20 subclasses.</p>
 <table>
 <caption>
-<span id="tab:ipcrank">Table 6.10: </span>Top 20 IPC Subclasses for Biodiversity Terms
+<span id="tab:ipcrank">Table 6.11: </span>Top 20 IPC Subclasses for Biodiversity Terms
 </caption>
 <thead>
 <tr>
@@ -1905,17 +2054,17 @@ H04B
 </tr>
 </tbody>
 </table>
-<p>A total of 1,773 IPC subclasses include our biodiversity terms. In considering Figure <a href="textmining.html#tab:ipcrank">6.10</a> we can make three key observations. The first of these is that we have a clear concentration of the biodiversity related terms in certain areas of the patent system. The second observation is that this data includes subclasses in section G and H of the classification that are very unlikely to have anything to do with biodiversity as such. For example, words in our set such as ‘order’ for the taxonomic rank are likely to create a lot of noise from systems that involve ordering in all its various forms (and should perhaps be removed). The third observation is that we can safely exclude areas that are likely to constitute noise by classification.</p>
+<p>A total of 1,773 IPC subclasses include our biodiversity terms. In considering Figure <a href="textmining.html#tab:ipcrank">6.11</a> we can make three key observations. The first of these is that we have a clear concentration of the biodiversity related terms in certain areas of the patent system. The second observation is that this data includes subclasses in section G and H of the classification that are very unlikely to have anything to do with biodiversity as such. For example, words in our set such as ‘order’ for the taxonomic rank are likely to create a lot of noise from systems that involve ordering in all its various forms (and should perhaps be removed). The third observation is that we can safely exclude areas that are likely to constitute noise by classification.</p>
 <p>One feature of the patent system is that documents receive multiple classification codes to describe the contents of a document. Excluding subclasses such as G01N will only have the effect of excluding documents that don’t contain one of the other ‘keep’ classifiers. That is, documents classified as both C12N and GO1N will be retained because of the presence of C12N. Drawing on this logic we can arrive at a set of subclasses that can be used as a filter for the biodiversity terms and constitute <code>core</code> classifiers for biodiversity. Note that in one case (subclass C02F) we would confine a search engine based search to C02F3 (for biological treatments of waste water and sewage) as the only relevant group in the subclass.</p>
 <div class="sourceCode" id="cb90"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb90-1"><a href="textmining.html#cb90-1" aria-hidden="true" tabindex="-1"></a>biodiversity_ipc_subclass <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
 <span id="cb90-2"><a href="textmining.html#cb90-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">ipc_subclass =</span> <span class="fu">c</span>(<span class="st">&quot;A01H&quot;</span>,<span class="st">&quot;A01K&quot;</span>,<span class="st">&quot;A01N&quot;</span>,<span class="st">&quot;A23L&quot;</span>,<span class="st">&quot;A23K&quot;</span>,<span class="st">&quot;A23G&quot;</span>,<span class="st">&quot;A23C&quot;</span>,<span class="st">&quot;A61K&quot;</span>,<span class="st">&quot;A61Q&quot;</span>,</span>
 <span id="cb90-3"><a href="textmining.html#cb90-3" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;C02F&quot;</span>,<span class="st">&quot;C07C&quot;</span>,<span class="st">&quot;C07D&quot;</span>,<span class="st">&quot;C07H&quot;</span>,<span class="st">&quot;C07K&quot;</span>,<span class="st">&quot;C08H&quot;</span>,<span class="st">&quot;C08L&quot;</span>,<span class="st">&quot;C09B&quot;</span>,<span class="st">&quot;C09D&quot;</span>,</span>
 <span id="cb90-4"><a href="textmining.html#cb90-4" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;C09G&quot;</span>,<span class="st">&quot;C09J&quot;</span>,<span class="st">&quot;CO9K&quot;</span>,<span class="st">&quot;C11B&quot;</span>,<span class="st">&quot;C11C&quot;</span>,<span class="st">&quot;C11D&quot;</span>,<span class="st">&quot;C12M&quot;</span>,<span class="st">&quot;C12N&quot;</span>,<span class="st">&quot;C12P&quot;</span>,</span>
 <span id="cb90-5"><a href="textmining.html#cb90-5" aria-hidden="true" tabindex="-1"></a>                   <span class="st">&quot;C12Q&quot;</span>,<span class="st">&quot;C12R&quot;</span>,<span class="st">&quot;C12S&quot;</span>,<span class="st">&quot;C40B&quot;</span>))</span></code></pre></div>
-<p>At present we have a set of biodiversity words. What we want to do next is to filter the documents to the records that contain a biodiversity word AND appear in one of the subclasses above. We then want to count up the patent_ids and obtain the grants (containing the titles, abstracts and other information) for further analysis. We achieve this by first filtering the data to those containing the subclasses, then we count the patent identifiers to create a distinct set and join on to the main patent grants table using the patent ids. Figure <a href="textmining.html#tab:loadbiopatids">6.11</a> shows the outome of joining the data back together again.</p>
+<p>At present we have a set of biodiversity words. What we want to do next is to filter the documents to the records that contain a biodiversity word AND appear in one of the subclasses above. We then want to count up the patent_ids and obtain the grants (containing the titles, abstracts and other information) for further analysis. We achieve this by first filtering the data to those containing the subclasses, then we count the patent identifiers to create a distinct set and join on to the main patent grants table using the patent ids. Figure <a href="textmining.html#tab:loadbiopatids">6.12</a> shows the outome of joining the data back together again.</p>
 <table>
 <caption>
-<span id="tab:loadbiopatids">Table 6.11: </span>Joining biodiversity words filtered by IPC subclasses to identify the original texts
+<span id="tab:loadbiopatids">Table 6.12: </span>Joining biodiversity words filtered by IPC subclasses to identify the original texts
 </caption>
 <thead>
 <tr>
@@ -2008,10 +2157,10 @@ Amino photo-reactive binder
 <p>The <code>tidytext</code> package makes it easy to tokenize texts into bigrams or trigrams by specifying an argument to the unnest_tokens() function or using the unnest_ngrams() function. We will focus here on bigrams. Note that for chemical compounds which often consist of strings of terms linked by hyphens, attention would need to be paid to adjusting the tokenisation to avoid splitting on hyphens.</p>
 <div class="sourceCode" id="cb91"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb91-1"><a href="textmining.html#cb91-1" aria-hidden="true" tabindex="-1"></a>biodiversity_texts <span class="ot">&lt;-</span> biodiversity_patent_ids <span class="sc">%&gt;%</span> </span>
 <span id="cb91-2"><a href="textmining.html#cb91-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unite</span>(text, <span class="fu">c</span>(title, abstract), <span class="at">sep =</span> <span class="st">&quot;. &quot;</span>)</span></code></pre></div>
-<p>Figure <a href="textmining.html#tab:headbigrams">6.12</a> shows a selection of the bigrams appearing in the biodiversity related texts.</p>
+<p>Figure <a href="textmining.html#tab:headbigrams">6.13</a> shows a selection of the bigrams appearing in the biodiversity related texts.</p>
 <table>
 <caption>
-<span id="tab:headbigrams">Table 6.12: </span>Biodiversity Related Bigrams
+<span id="tab:headbigrams">Table 6.13: </span>Biodiversity Related Bigrams
 </caption>
 <thead>
 <tr>
@@ -2129,10 +2278,10 @@ flour or
 <span id="cb92-3"><a href="textmining.html#cb92-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>one <span class="sc">%in%</span> tidytext<span class="sc">::</span>stop_words<span class="sc">$</span>word) <span class="sc">%&gt;%</span> </span>
 <span id="cb92-4"><a href="textmining.html#cb92-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>two <span class="sc">%in%</span> tidytext<span class="sc">::</span>stop_words<span class="sc">$</span>word) <span class="sc">%&gt;%</span> </span>
 <span id="cb92-5"><a href="textmining.html#cb92-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unite</span>(bigram, <span class="fu">c</span>(one, two), <span class="at">sep =</span> <span class="st">&quot; &quot;</span>)</span></code></pre></div>
-<p>As before this will radically reduce the size of the dataset to 9,321,285 although the set may still contain many irrelevant phrases as we can see in Figure <a href="textmining.html#tab:biodbigramhead">6.13</a>.</p>
+<p>As before this will radically reduce the size of the dataset to 9,321,285 although the set may still contain many irrelevant phrases as we can see in Figure <a href="textmining.html#tab:biodbigramhead">6.14</a>.</p>
 <table>
 <caption>
-<span id="tab:biodbigramhead">Table 6.13: </span>Biodiversity Bigram Terms
+<span id="tab:biodbigramhead">Table 6.14: </span>Biodiversity Bigram Terms
 </caption>
 <thead>
 <tr>
@@ -2237,14 +2386,14 @@ wastewater slurries
 </tr>
 </tbody>
 </table>
-<p>We now have a set of bigrams with many irrelevant phrases. We could simply filter these phrases for terms of interest. In the chapter on patent citation analysis we focus on genome editing technology which is closely linked to genome engineering and synthetic biology. The extraction of bigrams allows us to identify patent grants containing these terms of interest in the title or abstracts as we can see in the code below and Figure <a href="#tab:showgenebigrams"><strong>??</strong></a>.</p>
+<p>We now have a set of bigrams with many irrelevant phrases. We could simply filter these phrases for terms of interest. In the chapter on patent citation analysis we focus on genome editing technology which is closely linked to genome engineering and synthetic biology. The extraction of bigrams allows us to identify patent grants containing these terms of interest in the title or abstracts as we can see in the code below and Figure <a href="textmining.html#tab:showgenebigrams">6.15</a>.</p>
 <div class="sourceCode" id="cb93"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb93-1"><a href="textmining.html#cb93-1" aria-hidden="true" tabindex="-1"></a>clean_biodiversity_bigrams <span class="sc">%&gt;%</span> </span>
 <span id="cb93-2"><a href="textmining.html#cb93-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(bigram <span class="sc">==</span> <span class="st">&quot;genome editing&quot;</span> <span class="sc">|</span> bigram <span class="sc">==</span> <span class="st">&quot;gene editing&quot;</span> <span class="sc">|</span> bigram <span class="sc">==</span> <span class="st">&quot;crispr cas9&quot;</span> <span class="sc">|</span></span>
 <span id="cb93-3"><a href="textmining.html#cb93-3" aria-hidden="true" tabindex="-1"></a>           bigram <span class="sc">==</span> <span class="st">&quot;synthetic biology&quot;</span> <span class="sc">|</span> bigram <span class="sc">==</span> <span class="st">&quot;genome engineering&quot;</span>) <span class="sc">%&gt;%</span> </span>
 <span id="cb93-4"><a href="textmining.html#cb93-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(bigram)</span></code></pre></div>
 <table>
 <caption>
-<span id="tab:sshowgenebigrams">Table 6.14: </span>Genome Editing Bigrams
+<span id="tab:showgenebigrams">Table 6.15: </span>Genome Editing Bigrams
 </caption>
 <thead>
 <tr>
@@ -2585,7 +2734,7 @@ Figure 6.2: Frequency Trends for Genome Editing Terms
 <p>We can take a look at the phrases linked to our target terms in Figure <a href="textmining.html#fig:gebigrams">6.3</a> below.</p>
 <table>
 <caption>
-<span id="tab:gebigrams1">Table 6.15: </span>Genome editing phrases
+<span id="tab:gebigrams1">Table 6.16: </span>Genome editing phrases
 </caption>
 <thead>
 <tr>
@@ -3107,10 +3256,10 @@ Figure 6.3: Cooccurrence Scores for Gene Editing
 ```
 
 --->
-<p>The cooccurrence value for the matching term (in this case “genome editing”) is always 1. Inside the actual matrix this displays on the diagonal in the centre of the matrix and gives rise to the expression “removing the diagonal” or self-reference. We can do this by filtering to keep any value that does not equal 1 as we see in Figure <a href="textmining.html#tab:coocclean">6.16</a>.</p>
+<p>The cooccurrence value for the matching term (in this case “genome editing”) is always 1. Inside the actual matrix this displays on the diagonal in the centre of the matrix and gives rise to the expression “removing the diagonal” or self-reference. We can do this by filtering to keep any value that does not equal 1 as we see in Figure <a href="textmining.html#tab:coocclean">6.17</a>.</p>
 <table>
 <caption>
-<span id="tab:coocclean">Table 6.16: </span>Ranked Cooccurrence Scores for Gene Editing with Diagonal Removed
+<span id="tab:coocclean">Table 6.17: </span>Ranked Cooccurrence Scores for Gene Editing with Diagonal Removed
 </caption>
 <thead>
 <tr>
@@ -3212,7 +3361,7 @@ genome engineering
 <span id="cb100-13"><a href="textmining.html#cb100-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">&quot;none&quot;</span>) <span class="sc">+</span></span>
 <span id="cb100-14"><a href="textmining.html#cb100-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">&quot;Genome Editing Cooccurrence Network&quot;</span>)</span></code></pre></div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:genet"></span>
-<img src="images/textmining/genomeediting.png" alt="Genome Engineering Network" width="368" />
+<img src="images/textmining/genomeediting.png" alt="Genome Engineering Network" width="100%" />
 <p class="caption">
 Figure 6.4: Genome Engineering Network
 </p>

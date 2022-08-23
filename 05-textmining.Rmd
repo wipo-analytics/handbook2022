@@ -429,7 +429,7 @@ ipc_words <- ipc_words %>%
   left_join(ipc_total_words, by = "ipc_subclass")
 ```
 
-We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in  Figure \@ref(fig:tfidfig). 
+We are now in a position to apply the term frequency inverse document frequency calculations (using bind_tf_idf) as we see in  Figure \@ref(tab:tfidfig). 
 
 ```{r eval=FALSE}
 library(tidytext)
@@ -462,7 +462,7 @@ load("data/text_mining/ipc_words_tfid_head.rda")
 ```
 
 
-```{r tfidfig, echo=FALSE, eval=FALSE, fig.cap="Term Frequency, Inverse Frequency and TFIDF Scores"}
+```{r tfidfig, echo=FALSE, eval=TRUE, fig.cap="Term Frequency, Inverse Frequency and TFIDF Scores"}
 ipc_words_tfid_head %>% 
   knitr::kable(caption ="Term Frequency, Inverse Frequency and TFIDF Scores")
 ```
@@ -799,7 +799,7 @@ gene_editing_bigrams <- clean_biodiversity_bigrams %>%
 save(gene_editing_bigrams, file = "data/text_mining/gene_editing_bigrams.rda")
 ```
 
-```{r sshowgenebigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Genome Editing Bigrams"}
+```{r showgenebigrams, echo=FALSE, eval=TRUE, fig.align='center', fig.cap="Genome Editing Bigrams"}
 load("data/text_mining/gene_editing_bigrams.rda")
 
 gene_editing_bigrams %>% 
@@ -1041,7 +1041,7 @@ cooccurrence_clean %>%
   labs(title = "Genome Editing Cooccurrence Network")
 ```
 
-```{r genet, echo=FALSE, fig.align='center', fig.cap="Genome Engineering Network"}
+```{r genet, echo=FALSE, fig.align='center', fig.cap="Genome Engineering Network", out.width="100%"}
 knitr::include_graphics("images/textmining/genomeediting.png")
 ```
 
